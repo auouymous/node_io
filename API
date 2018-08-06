@@ -1,0 +1,48 @@
+side is a string:
+	U = +Y = up/top
+	D = -Y = down/bottom
+	N = +Z = north
+	S = -Z = south
+	E = +X = east
+	W = -X = west
+
+node definition implements all or some of these functions:
+
+	node_io_can_put_item(pos, node, side) -> bool
+	node_io_can_put_liquid(pos, node, side) -> bool
+	node_io_can_take_item(pos, node, side) -> bool
+	node_io_can_take_liquid(pos, node, side) -> bool
+
+	node_io_put_item(pos, node, side, putter, itemstack)
+		-- returns itemstack with leftovers or cleared
+		-- putter is a fake player
+	node_io_put_liquid(pos, node, side, putter, itemstack)
+		-- itemstack should be a source liquid (in bucket.liquids of bucket mod)
+
+	node_io_room_for_item(pos, node, side, itemstack) -> bool
+	node_io_room_for_liquid(pos, node, side, itemstack) -> bool
+
+	node_io_take_item(pos, node, side, taker, want_item, want_count)
+		-- returns an itemstack with <= want_count or nil if inventory is empty or doesn't have want_item
+		-- taker is a fake player
+		-- want_item should be nil for any item or contain a string with item name (filtered takes)
+		-- want_count should be greater than zero
+		-- returned itemstack shouldn't exceed max stack size, even if want_count does
+	node_io_take_liquid(pos, node, side, taker, want_liquid, want_count)
+
+	-- items and liquid should not be put back after taken
+	-- use the following API to check if taken item can be used/stored before taking it
+
+	node_io_get_item_size(pos, node, side) -> number of item inventory slots
+		-- can be used to iterate over an inventory
+		-- for i = 1, size do ... end
+	node_io_get_liquid_size(pos, node, side) -> number of liquid inventory slots
+
+	node_io_get_item_name(pos, node, side, index) -> item name
+		-- can be used to get the name of the stack in inventory slot, and determine if it will fit in local inventory before taking it
+			-- want_count parameter for take_*() can be adjusted to only take what will fit in local inventory
+	node_io_get_liquid_name(pos, node, side, index) -> item name
+
+	-- TODO: support power and signals
+
+init.lua contains utility functions to query and access nodes

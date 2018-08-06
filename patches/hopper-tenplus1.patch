@@ -1,0 +1,262 @@
+* implement node_io API for https://notabug.org/TenPlus1/hopper mod
+* void hopper can target any side of the node
+* containers support is commented out but should be restored for compatibility with mods the depend on it
+
+
+
+diff --git a/depends.txt b/depends.txt
+index 53a9e75..d2b2b18 100644
+--- a/depends.txt
++++ b/depends.txt
+@@ -1,3 +1,4 @@
+ default
+ intllib?
+ lucky_block?
++node_io
+diff --git a/init.lua b/init.lua
+index 062c739..3fadaee 100644
+--- a/init.lua
++++ b/init.lua
+@@ -24,6 +24,7 @@ function check_creative(name)
+ end
+ 
+ 
++--[[
+ -- default containers
+ local containers = {
+ 
+@@ -94,6 +95,7 @@ if minetest.get_modpath("wine") then
+ 		{"void", "wine:wine_barrel", "src"},
+ 	})
+ end
++]]
+ 
+ 
+ -- formspec
+@@ -225,6 +227,7 @@ minetest.register_node("hopper:hopper", {
+ 	on_rotate = screwdriver.disallow,
+ 	on_blast = function() end,
+ })
++node_io.init_main_inventory("hopper:hopper", true)
+ 
+ 
+ -- side hopper
+@@ -297,6 +300,7 @@ minetest.register_node("hopper:hopper_side", {
+ 	on_rotate = screwdriver.rotate_simple,
+ 	on_blast = function() end,
+ })
++node_io.init_main_inventory("hopper:hopper_side", true)
+ 
+ 
+ local player_void = {}
+@@ -330,7 +334,8 @@ minetest.register_node("hopper:hopper_void", {
+ 
+ 		local pos = pointed_thing.under
+ 		local name = player:get_player_name()
+-		local node = minetest.get_node(pos).name
++--		local node = minetest.get_node(pos).name
++		local node = minetest.get_node(pos)
+ 		local ok
+ 
+ 		if minetest.is_protected(pos, name) then
+@@ -338,6 +343,7 @@ minetest.register_node("hopper:hopper_void", {
+ 			return itemstack
+ 		end
+ 
++--[[
+ 		for _ = 1, #containers do
+ 			if node == containers[_][2] then
+ 				ok = true
+@@ -345,9 +351,12 @@ minetest.register_node("hopper:hopper_void", {
+ 		end
+ 
+ 		if ok then
++]]
++		if node_io.can_put_item(pos, node) then
++			local side = node_io.get_pointed_side(player, pointed_thing)
+ 			minetest.chat_send_player(name, S("Output container set"
+-				.. " " .. minetest.pos_to_string(pos)))
+-			player_void[name] = pos
++				.. " " .. minetest.pos_to_string(pos) .. " " .. side))
++			player_void[name] = {pos = pos, side = side}
+ 		else
+ 			minetest.chat_send_player(name, S("Not a registered container!"))
+ 			player_void[name] = nil
+@@ -381,7 +390,8 @@ minetest.register_node("hopper:hopper_void", {
+ 		inv:set_size("main", 4*4)
+ 
+ 		meta:set_string("owner", name)
+-		meta:set_string("void", minetest.pos_to_string(player_void[name]))
++		meta:set_string("void", minetest.pos_to_string(player_void[name].pos))
++		meta:set_string("void_side", player_void[name].side)
+ 
+ 		return itemstack
+ 	end,
+@@ -425,8 +435,10 @@ minetest.register_node("hopper:hopper_void", {
+ 	on_rotate = screwdriver.disallow,
+ 	on_blast = function() end,
+ })
++node_io.init_main_inventory("hopper:hopper_void", true)
+ 
+ 
++--[[
+ -- transfer function
+ local transfer = function(src, srcpos, dst, dstpos)
+ 
+@@ -467,6 +479,7 @@ local transfer = function(src, srcpos, dst, dstpos)
+ 		end
+ 	end
+ end
++]]
+ 
+ 
+ -- hopper workings
+@@ -502,8 +515,7 @@ minetest.register_abm({
+ 			end
+ 		end
+ 
+-
+-		local front
++		local put_pos, put_side
+ 
+ 		-- if side hopper check which way spout is facing
+ 		if node.name == "hopper:hopper_side" then
+@@ -511,19 +523,20 @@ minetest.register_abm({
+ 			local face = minetest.get_node(pos).param2
+ 
+ 			if face == 0 then
+-				front = {x = pos.x - 1, y = pos.y, z = pos.z}
++				put_pos = {x = pos.x - 1, y = pos.y, z = pos.z}
+ 
+ 			elseif face == 1 then
+-				front = {x = pos.x, y = pos.y, z = pos.z + 1}
++				put_pos = {x = pos.x, y = pos.y, z = pos.z + 1}
+ 
+ 			elseif face == 2 then
+-				front = {x = pos.x + 1, y = pos.y, z = pos.z}
++				put_pos = {x = pos.x + 1, y = pos.y, z = pos.z}
+ 
+ 			elseif face == 3 then
+-				front = {x = pos.x, y = pos.y, z = pos.z - 1}
++				put_pos = {x = pos.x, y = pos.y, z = pos.z - 1}
+ 			else
+ 				return
+ 			end
++			put_side = node_io.get_target_side(pos, put_pos)
+ 
+ 		elseif node.name == "hopper:hopper_void" then
+ 
+@@ -531,61 +544,89 @@ minetest.register_abm({
+ 
+ 			if not meta then return end
+ 
+-			front = minetest.string_to_pos(meta:get_string("void"))
++			put_pos = minetest.string_to_pos(meta:get_string("void"))
++			put_side = meta:get_string("void_side") or "U"
+ 
+ 		elseif node.name == "hopper:hopper" then
+ 			-- otherwise normal hopper, output downwards
+-			front = {x = pos.x, y = pos.y - 1, z = pos.z}
++			put_pos = {x = pos.x, y = pos.y - 1, z = pos.z}
++			put_side = node_io.get_target_side(pos, put_pos)
++
+ 		else
+ 			return
+ 		end
++		-- get node at other end of spout
++		local put_node = minetest.get_node(put_pos)
++		if node_io.can_put_item(put_pos, put_node, put_side) then
++			for i = 1, inv:get_size("main") do
++				local stack = inv:get_stack("main", i)
++				local item = stack:get_name()
++				if item ~= "" and node_io.room_for_item(put_pos, put_node, put_side, node_io.make_itemstack(stack, 1)) then
++					node_io.put_item(put_pos, put_node, put_side, nil, stack:take_item(1))
++					inv:set_stack("main", i, stack)
++					minetest.get_node_timer(put_pos):start(0.5)
++					break
++				end
++			end
++		end
+ 
+ 		-- get node above hopper
+-		local top = minetest.get_node({x = pos.x, y = pos.y + 1, z = pos.z}).name
+-
+-		-- get node at other end of spout
+-		local out = minetest.get_node(front).name
+-
+-		local where, nod, inv, def
++		local take_pos = {x = pos.x, y = pos.y + 1, z = pos.z}
++		local take_node = minetest.get_node(take_pos)
++		if node_io.can_take_item(take_pos, take_node, "D") then
++			for i = 1, node_io.get_item_size(take_pos, take_node, "D") do
++				local item = node_io.get_item_name(take_pos, take_node, "D", i)
++				if inv:room_for_item("main", ItemStack(item.." 1")) then
++					local itemstack = node_io.take_item(take_pos, take_node, "D", nil, item, 1)
++					if itemstack then
++						inv:add_item("main", itemstack)
++						minetest.get_node_timer(take_pos):start(0.5)
++						break
++					end
++				end
++			end
++		end
++--[[
++		local target_side, target_node_name, target_inv_name
+ 
+ 		-- do for loop here for api check
+ 		for n = 1, #containers do
+ 
+-			where = containers[n][1]
+-			nod = containers[n][2]
+-			inv = containers[n][3]
++			target_side = containers[n][1]
++			target_node_name = containers[n][2]
++			target_inv_name = containers[n][3]
+ 
+ 			-- from top node into hopper below
+-			if where == "top" and top == nod
++			if target_side == "top" and take_node_name == target_node_name
+ 			and (node.name == "hopper:hopper"
+ 			or node.name == "hopper:hopper_side"
+ 			or node.name == "hopper:hopper_void") then
+ 
+-				transfer(inv, {x = pos.x, y = pos.y + 1, z = pos.z}, "main", pos)
+-				minetest.get_node_timer(
+-					{x = pos.x, y = pos.y + 1, z = pos.z}):start(0.5)
++				transfer(target_inv_name, take_pos, "main", pos)
++				minetest.get_node_timer(take_pos):start(0.5)
+ 
+ 			-- from top hopper into node below
+-			elseif where == "bottom" and out == nod
++			elseif target_side == "bottom" and put_node_name == target_node_name
+ 			and node.name == "hopper:hopper" then
+ 
+-				transfer("main", pos, inv, front)
+-				minetest.get_node_timer(front):start(0.5)
++				transfer("main", pos, target_inv_name, put_pos)
++				minetest.get_node_timer(put_pos):start(0.5)
+ 
+ 			-- side hopper into container beside
+-			elseif where == "side" and out == nod
++			elseif target_side == "side" and put_node_name == target_node_name
+ 			and node.name == "hopper:hopper_side" then
+ 
+-				transfer("main", pos, inv, front)
+-				minetest.get_node_timer(front):start(0.5)
++				transfer("main", pos, target_inv_name, put_pos)
++				minetest.get_node_timer(put_pos):start(0.5)
+ 
+ 			-- void hopper to destination container
+-			elseif where == "void" and out == nod
++			elseif target_side == "void" and put_node_name == target_node_name
+ 			and node.name == "hopper:hopper_void" then
+-				transfer("main", pos, inv, front)
+-				minetest.get_node_timer(front):start(0.5)
++				transfer("main", pos, target_inv_name, put_pos)
++				minetest.get_node_timer(put_pos):start(0.5)
+ 			end
+ 		end
++]]
+ 	end,
+ })
+ 
