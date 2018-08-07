@@ -1,10 +1,20 @@
 side is a string:
-	U = +Y = up/top
-	D = -Y = down/bottom
-	N = +Z = north
-	S = -Z = south
-	E = +X = east
-	W = -X = west
+	"U" = +Y = up/top
+	"D" = -Y = down/bottom
+	"N" = +Z = north
+	"S" = -Z = south
+	"E" = +X = east
+	"W" = -X = west
+
+	node_io.get_target_side(pos, target_pos) -> side
+		-- pos is position of transfer node and target_pos is position of inventory node
+		-- returns the side on inventory node
+
+	node_io.get_pointed_side(pointer, pointed_thing) -> side
+		-- pointer is player and pointed_thing is the node player is pointing at
+		-- returns the side of node the player is pointing at
+
+
 
 node definition implements all or some of these functions:
 
@@ -12,6 +22,7 @@ node definition implements all or some of these functions:
 	node_io_can_put_liquid(pos, node, side) -> bool
 	node_io_can_take_item(pos, node, side) -> bool
 	node_io_can_take_liquid(pos, node, side) -> bool
+
 
 	node_io_put_item(pos, node, side, putter, itemstack)
 		-- returns itemstack with leftovers or cleared
@@ -21,6 +32,7 @@ node definition implements all or some of these functions:
 
 	node_io_room_for_item(pos, node, side, itemstack) -> bool
 	node_io_room_for_liquid(pos, node, side, itemstack) -> bool
+
 
 	node_io_take_item(pos, node, side, taker, want_item, want_count)
 		-- returns an itemstack with <= want_count or nil if inventory is empty or doesn't have want_item
@@ -43,6 +55,33 @@ node definition implements all or some of these functions:
 			-- want_count parameter for take_*() can be adjusted to only take what will fit in local inventory
 	node_io_get_liquid_name(pos, node, side, index) -> item name
 
+
 	-- TODO: support power and signals
 
-init.lua contains utility functions to query and access nodes
+
+
+API has utility functions for transfer nodes to easily call every node function above
+	-- node_io.can_put_item() calls ndef.node_io_can_put_item()
+
+API has utility functions for standard inventory nodes to easily implement the API
+
+	node_io.make_itemstack(stack, count) -> itemstack
+		-- returns a "fake" itemstack based on stack but only containing count items
+		-- this can be used with node_io.room_for_item(), and then use itemstack=stack:take_item(count) to get a real itemstack
+
+	node_io.get_inventory_size(pos, inv_name)
+		-- call from node_io_get_item_size()
+	node_io.get_inventory_name(pos, inv_name, index)
+		-- call from node_io_get_item_name()
+	node_io.put_item_in_inventory(pos, node, inv_name, putter, itemstack)
+		-- call from node_io_put_item()
+	node_io.take_item_from_inventory(pos, node, inv_name, taker, want_item, want_count)
+		-- call from node_io_take_item()
+
+	node_io.init_main_inventory(node_name, allow_take)
+		-- implement the API for standard inventory nodes that have a single "main" inventory
+
+
+
+See default_support.lua for API implementation in default:chest and default:furnace inventory nodes.
+See patches/hopper-tenplus1.patch for example API use by the hopper:hopper transfer node.
