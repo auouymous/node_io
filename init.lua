@@ -36,26 +36,28 @@ end
 
 
 -- query API
+	-- can_* functions should always be called first and return false if ndef isn't found (unknown node)
+	-- the other functions can safely skip the ndef check for performance
 
 node_io.can_put_item = function(pos, node, side)
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_can_put_item then return false end
+	if not ndef or not ndef.node_io_can_put_item then return false end
 	return ndef.node_io_can_put_item(pos, node, side)
 end
 node_io.can_put_liquid = function(pos, node, side)
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_can_put_liquid then return false end
+	if not ndef or not ndef.node_io_can_put_liquid then return false end
 	return ndef.node_io_can_put_liquid(pos, node, side)
 end
 
 node_io.can_take_item = function(pos, node, side)
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_can_take_item then return false end
+	if not ndef or not ndef.node_io_can_take_item then return false end
 	return ndef.node_io_can_take_item(pos, node, side)
 end
 node_io.can_take_liquid = function(pos, node, side)
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_can_take_liquid then return false end
+	if not ndef or not ndef.node_io_can_take_liquid then return false end
 	return ndef.node_io_can_take_liquid(pos, node, side)
 end
 

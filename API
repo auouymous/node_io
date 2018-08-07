@@ -62,6 +62,8 @@ node definition implements all or some of these functions:
 
 API has utility functions for transfer nodes to easily call every node function above
 	-- node_io.can_put_item() calls ndef.node_io_can_put_item()
+	-- the can_put_* functions should always be called before using the room_for_* or put_* functions on an inventory node
+	-- the can_take_* functions should always be called before using the get_*_size, get_*_name or take_* functions on an inventory node
 
 API has utility functions for standard inventory nodes to easily implement the API
 
