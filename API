@@ -6,6 +6,10 @@ side is a string:
 	"E" = +X = east
 	"W" = -X = west
 
+
+
+API has utility functions to get a node's side
+
 	node_io.get_target_side(pos, target_pos) -> side
 		-- pos is position of transfer node and target_pos is position of inventory node
 		-- returns the side on inventory node
