@@ -59,6 +59,17 @@ node_io.can_take_liquid = function(pos, node, side)
 	return ndef.node_io_can_take_liquid(pos, node, side)
 end
 
+node_io.room_for_item = function(pos, node, side, itemstack)
+	local ndef = minetest.registered_nodes[node.name]
+	if not ndef.node_io_room_for_item then return false end
+	return ndef.node_io_room_for_item(pos, node, side, itemstack)
+end
+node_io.room_for_liquid = function(pos, node, side, itemstack)
+	local ndef = minetest.registered_nodes[node.name]
+	if not ndef.node_io_room_for_liquid then return false end
+	return ndef.node_io_room_for_liquid(pos, node, side, itemstack)
+end
+
 node_io.get_item_size = function(pos, node, side)
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_get_item_size then return 0 end
@@ -106,16 +117,6 @@ node_io.take_liquid = function(pos, node, side, taker, want_liquid, want_count)
 	return ndef.node_io_take_liquid(pos, node, side, taker, want_liquid, want_count)
 end
 
-node_io.room_for_item = function(pos, node, side, itemstack)
-	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_room_for_item then return false end
-	return ndef.node_io_room_for_item(pos, node, side, itemstack)
-end
-node_io.room_for_liquid = function(pos, node, side, itemstack)
-	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_room_for_liquid then return false end
-	return ndef.node_io_room_for_liquid(pos, node, side, itemstack)
-end
 
 
 
