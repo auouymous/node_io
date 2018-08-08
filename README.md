@@ -10,7 +10,7 @@ The API currently supports item and liquid inventory nodes, but could be extende
 This mod implements node-io support for default chest, locked chest and furnace.
 But if the pipeworks mod is installed, the furnace loses support due to being redefined by pipeworks.
 
-The [test_io](https://github.com/auouymous/test_io) mod contains item and liquid tansfer nodes to test the node_io mod.
+The [test_io](https://github.com/auouymous/test_io) mod contains item and liquid transfer nodes to test the node_io mod.
 
 
 
