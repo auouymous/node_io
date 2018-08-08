@@ -31,11 +31,15 @@ node definition implements all or some of these functions:
 	node_io_put_item(pos, node, side, putter, itemstack)
 		-- returns itemstack with leftovers or cleared
 		-- putter is a fake player
-	node_io_put_liquid(pos, node, side, putter, itemstack)
-		-- itemstack should be a source liquid (in bucket.liquids of bucket mod)
+	node_io_put_liquid(pos, node, side, putter, liquid, millibuckets)
+		-- returns millibuckets with leftovers or zero if all was stored
+		-- liquid should be the name of a source liquid (in bucket.liquids of bucket mod)
+		-- 1 bucket or source block is 1000 millibuckets
 
 	node_io_room_for_item(pos, node, side, itemstack) -> bool
-	node_io_room_for_liquid(pos, node, side, itemstack) -> bool
+	node_io_room_for_liquid(pos, node, side, liquid, millibuckets) -> bool
+		-- use millibuckets=1 to check if not full, then call put_liquid() with actual amount to transfer, leftover
+		-- use millibuckets=1000 with room_for_liquid() and put_liquid() to only insert full buckets
 
 
 	node_io_take_item(pos, node, side, taker, want_item, want_count)
@@ -44,7 +48,9 @@ node definition implements all or some of these functions:
 		-- want_item should be nil for any item or contain a string with item name (filtered takes)
 		-- want_count should be greater than zero
 		-- returned itemstack shouldn't exceed max stack size, even if want_count does
-	node_io_take_liquid(pos, node, side, taker, want_liquid, want_count)
+	node_io_take_liquid(pos, node, side, taker, want_liquid, want_millibuckets)
+		-- returns {liquid:string, millibuckets:int} with <= want_millibuckets or nil if inventory is empty or doesn't have want_liquid
+		-- want_liquid should be the name of a source liquid (in bucket.liquids of bucket mod)
 
 	-- items and liquid should not be put back after taken
 	-- use the following API to check if taken item can be used/stored before taking it
@@ -53,11 +59,13 @@ node definition implements all or some of these functions:
 		-- can be used to iterate over an inventory
 		-- for i = 1, size do ... end
 	node_io_get_liquid_size(pos, node, side) -> number of liquid inventory slots
+		-- this is always 1 unless inventory can hold multiple liquid types
 
 	node_io_get_item_name(pos, node, side, index) -> item name
 		-- can be used to get the name of the stack in inventory slot, and determine if it will fit in local inventory before taking it
 			-- want_count parameter for take_*() can be adjusted to only take what will fit in local inventory
-	node_io_get_liquid_name(pos, node, side, index) -> item name
+		-- return value should be a string with name or empty string
+	node_io_get_liquid_name(pos, node, side, index) -> liquid name
 
 
 	-- TODO: support power and signals

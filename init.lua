@@ -66,29 +66,29 @@ node_io.room_for_item = function(pos, node, side, itemstack)
 	if not ndef.node_io_room_for_item then return false end
 	return ndef.node_io_room_for_item(pos, node, side, itemstack)
 end
-node_io.room_for_liquid = function(pos, node, side, itemstack)
+node_io.room_for_liquid = function(pos, node, side, liquid, millibuckets)
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_room_for_liquid then return false end
-	return ndef.node_io_room_for_liquid(pos, node, side, itemstack)
+	return ndef.node_io_room_for_liquid(pos, node, side, liquid, millibuckets)
 end
 
-node_io.get_item_size = function(pos, node, side)
+node_io.get_item_size = function(pos, node, side) -- returns non-negative number
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_get_item_size then return 0 end
 	return ndef.node_io_get_item_size(pos, node, side)
 end
-node_io.get_liquid_size = function(pos, node, side)
+node_io.get_liquid_size = function(pos, node, side) -- returns non-negative number
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_get_liquid_size then return 0 end
 	return ndef.node_io_get_liquid_size(pos, node, side)
 end
 
-node_io.get_item_name = function(pos, node, side, index)
+node_io.get_item_name = function(pos, node, side, index) -- returns string or empty string
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_get_item_name then return "" end
 	return ndef.node_io_get_item_name(pos, node, side, index)
 end
-node_io.get_liquid_name = function(pos, node, side, index)
+node_io.get_liquid_name = function(pos, node, side, index) -- returns string or empty string
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_get_liquid_name then return "" end
 	return ndef.node_io_get_liquid_name(pos, node, side, index)
@@ -97,23 +97,23 @@ end
 
 -- access API
 
-node_io.put_item = function(pos, node, side, putter, itemstack)
+node_io.put_item = function(pos, node, side, putter, itemstack) -- returns itemstack with leftovers or a cleared itemstack
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_put_item then return itemstack end
 	return ndef.node_io_put_item(pos, node, side, putter, itemstack)
 end
-node_io.put_liquid = function(pos, node, side, putter, itemstack)
+node_io.put_liquid = function(pos, node, side, putter, liquid, millibuckets) -- returns leftover millibuckets or zero
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_put_liquid then return itemstack end
-	return ndef.node_io_put_liquid(pos, node, side, putter, itemstack)
+	if not ndef.node_io_put_liquid then return millibuckets end
+	return ndef.node_io_put_liquid(pos, node, side, putter, liquid, millibuckets)
 end
 
-node_io.take_item = function(pos, node, side, taker, want_item, want_count)
+node_io.take_item = function(pos, node, side, taker, want_item, want_count) -- returns itemstack or nil
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_take_item then return nil end
 	return ndef.node_io_take_item(pos, node, side, taker, want_item, want_count)
 end
-node_io.take_liquid = function(pos, node, side, taker, want_liquid, want_count)
+node_io.take_liquid = function(pos, node, side, taker, want_liquid, want_count) -- returns {liquid:string, millibuckets:int} or nil
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_take_liquid then return nil end
 	return ndef.node_io_take_liquid(pos, node, side, taker, want_liquid, want_count)
