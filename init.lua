@@ -113,7 +113,7 @@ node_io.take_item = function(pos, node, side, taker, want_item, want_count) -- r
 	if not ndef.node_io_take_item then return nil end
 	return ndef.node_io_take_item(pos, node, side, taker, want_item, want_count)
 end
-node_io.take_liquid = function(pos, node, side, taker, want_liquid, want_count) -- returns {liquid:string, millibuckets:int} or nil
+node_io.take_liquid = function(pos, node, side, taker, want_liquid, want_count) -- returns {name:string, millibuckets:int} or nil
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef.node_io_take_liquid then return nil end
 	return ndef.node_io_take_liquid(pos, node, side, taker, want_liquid, want_count)

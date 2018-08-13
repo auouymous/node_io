@@ -49,7 +49,7 @@ node definition implements all or some of these functions:
 		-- want_count should be greater than zero
 		-- returned itemstack shouldn't exceed max stack size, even if want_count does
 	node_io_take_liquid(pos, node, side, taker, want_liquid, want_millibuckets)
-		-- returns {liquid:string, millibuckets:int} with <= want_millibuckets or nil if inventory is empty or doesn't have want_liquid
+		-- returns {name:string, millibuckets:int} with <= want_millibuckets or nil if inventory is empty or doesn't have want_liquid
 		-- want_liquid should be the name of a source liquid (in bucket.liquids of bucket mod)
 
 	-- items and liquid should not be put back after taken
