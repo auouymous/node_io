@@ -124,12 +124,6 @@ end
 
 -- functions for mods with inventories to implement API
 
-node_io.make_itemstack = function(stack, count)
-	local itemstack = ItemStack(stack:get_name().." "..count)
-	itemstack:set_wear(stack:get_wear())
-	return itemstack
-end
-
 node_io.compare_itemstack = function(itemstack1, itemstack2)
 	if itemstack1:get_name() ~= itemstack2:get_name() then return false end
 	if itemstack1:get_wear() ~= itemstack2:get_wear() then return false end

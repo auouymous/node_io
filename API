@@ -84,10 +84,6 @@ API has utility functions for transfer nodes to easily call every node function 
 
 API has utility functions for standard inventory nodes to easily implement the API
 
-	node_io.make_itemstack(stack, count) -> itemstack
-		-- returns a "fake" itemstack based on stack but only containing count items
-		-- this can be used with node_io.room_for_item(), and then use itemstack=stack:take_item(count) to get a real itemstack
-
 	node_io.compare_itemstack(itemstack1, itemstack2) -> bool
 		-- returns true if both itemstacks are identical, excluding count
 
