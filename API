@@ -36,9 +36,14 @@ node definition implements all or some of these functions:
 		-- liquid should be the name of a source liquid (in bucket.liquids of bucket mod)
 		-- 1 bucket or source block is 1000 millibuckets
 
-	node_io_room_for_item(pos, node, side, itemstack) -> bool
-	node_io_room_for_liquid(pos, node, side, liquid, millibuckets) -> bool
-		-- use millibuckets=1 to check if not full, then call put_liquid() with actual amount to transfer, leftover
+	node_io_room_for_item(pos, node, side, itemstack, count) -> int
+		-- ignore count in itemstack, only use the count parameter
+		-- returns count if inventory can hold entire stack, else returns amount the inventory can hold
+		-- use count=1 to check if not full, then call put_item() with actual amount to transfer
+		-- the non-zero return count is needed by transfer nodes that take from one inventory node and put in another inventory node
+	node_io_room_for_liquid(pos, node, side, liquid, millibuckets) -> int
+		-- returns millibuckets if inventory can hold entire amount, else returns amount the inventory can hold
+		-- use millibuckets=1 to check if not full, then call put_liquid() with actual amount to transfer
 		-- use millibuckets=1000 with room_for_liquid() and put_liquid() to only insert full buckets
 
 
@@ -83,6 +88,11 @@ API has utility functions for standard inventory nodes to easily implement the A
 		-- returns a "fake" itemstack based on stack but only containing count items
 		-- this can be used with node_io.room_for_item(), and then use itemstack=stack:take_item(count) to get a real itemstack
 
+	node_io.compare_itemstack(itemstack1, itemstack2) -> bool
+		-- returns true if both itemstacks are identical, excluding count
+
+	node_io.room_for_item_in_inventory(inv, inv_name, itemstack, count) -> int
+		-- call from node_io_room_for_item()
 	node_io.get_inventory_size(pos, inv_name)
 		-- call from node_io_get_item_size()
 	node_io.get_inventory_name(pos, inv_name, index)

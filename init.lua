@@ -61,14 +61,14 @@ node_io.can_take_liquid = function(pos, node, side)
 	return ndef.node_io_can_take_liquid(pos, node, side)
 end
 
-node_io.room_for_item = function(pos, node, side, itemstack)
+node_io.room_for_item = function(pos, node, side, itemstack, count) -- returns non-negative number
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_room_for_item then return false end
-	return ndef.node_io_room_for_item(pos, node, side, itemstack)
+	if not ndef.node_io_room_for_item then return 0 end
+	return ndef.node_io_room_for_item(pos, node, side, itemstack, count)
 end
-node_io.room_for_liquid = function(pos, node, side, liquid, millibuckets)
+node_io.room_for_liquid = function(pos, node, side, liquid, millibuckets) -- returns non-negative number
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_room_for_liquid then return false end
+	if not ndef.node_io_room_for_liquid then return 0 end
 	return ndef.node_io_room_for_liquid(pos, node, side, liquid, millibuckets)
 end
 
@@ -128,6 +128,31 @@ node_io.make_itemstack = function(stack, count)
 	local itemstack = ItemStack(stack:get_name().." "..count)
 	itemstack:set_wear(stack:get_wear())
 	return itemstack
+end
+
+node_io.compare_itemstack = function(itemstack1, itemstack2)
+	if itemstack1:get_name() ~= itemstack2:get_name() then return false end
+	if itemstack1:get_wear() ~= itemstack2:get_wear() then return false end
+	if itemstack1:get_metadata() ~= itemstack2:get_metadata() then return false end
+	return true
+end
+
+node_io.room_for_item_in_inventory = function(inv, inv_name, itemstack, count)
+	local max = itemstack:get_stack_max()
+	local put_count = max
+	if count < put_count then put_count = count end
+	local room = 0
+	for i = 1, inv:get_size(inv_name) do
+		local stack = inv:get_stack("main", i)
+		if stack:is_empty() then return put_count end
+		if node_io.compare_itemstack(stack, itemstack) then
+			if stack:get_count() < max then
+				local room = room + max - stack:get_count()
+				if room >= put_count then return put_count end
+			end
+		end
+	end
+	return room
 end
 
 node_io.get_inventory_size = function(pos, inv_name)
@@ -196,10 +221,10 @@ node_io.init_main_inventory = function(node_name, allow_take)
 	local def = {}
 
 	def.node_io_can_put_item = function(pos, node, side) return true end
-	def.node_io_room_for_item = function(pos, node, side, itemstack)
+	def.node_io_room_for_item = function(pos, node, side, itemstack, count)
 		local inv = minetest.get_meta(pos):get_inventory()
-		if not inv then return false end
-		return inv:room_for_item("main", itemstack)
+		if not inv then return 0 end
+		return node_io.room_for_item_in_inventory(inv, "main", itemstack, count)
 	end
 	def.node_io_put_item = function(pos, node, side, putter, itemstack)
 		return node_io.put_item_in_inventory(pos, node, "main", putter, itemstack)
