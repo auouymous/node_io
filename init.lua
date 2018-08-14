@@ -127,7 +127,7 @@ end
 node_io.compare_itemstack = function(itemstack1, itemstack2)
 	if itemstack1:get_name() ~= itemstack2:get_name() then return false end
 	if itemstack1:get_wear() ~= itemstack2:get_wear() then return false end
-	if itemstack1:get_metadata() ~= itemstack2:get_metadata() then return false end
+	if itemstack1:get_meta() ~= itemstack2:get_meta() then return false end
 	return true
 end
 
