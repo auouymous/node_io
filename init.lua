@@ -168,7 +168,7 @@ end
 
 node_io.get_inventory_name = function(pos, inv_name, index)
 	local inv = minetest.get_meta(pos):get_inventory()
-	if not inv or index < 1 or index > inv:get_size(inv_name) then return nil end
+	if not inv or index < 1 or index > inv:get_size(inv_name) then return "" end
 	return inv:get_stack(inv_name, index):get_name()
 end
 
