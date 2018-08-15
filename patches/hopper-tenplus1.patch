@@ -189,9 +189,9 @@ index 062c739..3fadaee 100644
 +		local take_node = minetest.get_node(take_pos)
 +		if node_io.can_take_item(take_pos, take_node, "D") then
 +			for i = 1, node_io.get_item_size(take_pos, take_node, "D") do
-+				local item = node_io.get_item_name(take_pos, take_node, "D", i)
-+				if inv:room_for_item("main", ItemStack(item.." 1")) then
-+					local itemstack = node_io.take_item(take_pos, take_node, "D", nil, item, 1)
++				local stack = node_io.get_item_stack(take_pos, take_node, "D", i)
++				if stack and inv:room_for_item("main", stack) then
++					local itemstack = node_io.take_item(take_pos, take_node, "D", nil, stack, 1)
 +					if itemstack then
 +						inv:add_item("main", itemstack)
 +						minetest.get_node_timer(take_pos):start(0.5)

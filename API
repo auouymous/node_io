@@ -50,7 +50,7 @@ node definition implements all or some of these functions:
 	node_io_take_item(pos, node, side, taker, want_item, want_count)
 		-- returns an itemstack with <= want_count or nil if inventory is empty or doesn't have want_item
 		-- taker is a fake player
-		-- want_item should be nil for any item or contain a string with item name (filtered takes)
+		-- want_item should be nil for any item, contain a string with item name to filter by name or contain an itemstack to filter by name, wear and metadata
 		-- want_count should be greater than zero
 		-- returned itemstack shouldn't exceed max stack size, even if want_count does
 	node_io_take_liquid(pos, node, side, taker, want_liquid, want_millibuckets)
@@ -72,6 +72,12 @@ node definition implements all or some of these functions:
 		-- return value should be a string with name or empty string
 	node_io_get_liquid_name(pos, node, side, index) -> liquid name
 
+	node_io_get_item_stack(pos, node, side, index) -> item itemstack
+		-- can be used to get a copy of the itemstack in inventory slot, and determine if it will fit in local inventory before taking it
+			-- want_count parameter for take_*() can be adjusted to only take what will fit in local inventory
+		-- return value should be an itemstack with count=1 or nil
+	node_io_get_liquid_stack(pos, node, side, index) -> liquid itemstack
+
 
 	-- TODO: support power and signals
 
@@ -80,7 +86,7 @@ node definition implements all or some of these functions:
 API has utility functions for transfer nodes to easily call every node function above
 	-- node_io.can_put_item() calls ndef.node_io_can_put_item()
 	-- the can_put_* functions should always be called before using the room_for_* or put_* functions on an inventory node
-	-- the can_take_* functions should always be called before using the get_*_size, get_*_name or take_* functions on an inventory node
+	-- the can_take_* functions should always be called before using the get_*_size, get_*_name, get_*_stack or take_* functions on an inventory node
 
 API has utility functions for standard inventory nodes to easily implement the API
 
@@ -93,6 +99,8 @@ API has utility functions for standard inventory nodes to easily implement the A
 		-- call from node_io_get_item_size()
 	node_io.get_inventory_name(pos, inv_name, index)
 		-- call from node_io_get_item_name()
+	node_io.get_inventory_stack(pos, inv_name, index)
+		-- call from node_io_get_item_stack()
 	node_io.put_item_in_inventory(pos, node, inv_name, putter, itemstack)
 		-- call from node_io_put_item()
 	node_io.take_item_from_inventory(pos, node, inv_name, taker, want_item, want_count)

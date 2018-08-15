@@ -94,6 +94,17 @@ node_io.get_liquid_name = function(pos, node, side, index) -- returns string or 
 	return ndef.node_io_get_liquid_name(pos, node, side, index)
 end
 
+node_io.get_item_stack = function(pos, node, side, index) -- returns itemstack or nil
+	local ndef = minetest.registered_nodes[node.name]
+	if not ndef.node_io_get_item_stack then return nil end
+	return ndef.node_io_get_item_stack(pos, node, side, index)
+end
+node_io.get_liquid_stack = function(pos, node, side, index) -- returns itemstack or nil
+	local ndef = minetest.registered_nodes[node.name]
+	if not ndef.node_io_get_liquid_stack then return nil end
+	return ndef.node_io_get_liquid_stack(pos, node, side, index)
+end
+
 
 -- access API
 
@@ -161,6 +172,15 @@ node_io.get_inventory_name = function(pos, inv_name, index)
 	return inv:get_stack(inv_name, index):get_name()
 end
 
+node_io.get_inventory_stack = function(pos, inv_name, index)
+	local inv = minetest.get_meta(pos):get_inventory()
+	if not inv or index < 1 or index > inv:get_size(inv_name) then return nil end
+	local stack = inv:get_stack(inv_name, index)
+	if stack:is_empty() then return nil end
+	stack:set_count(1)
+	return stack
+end
+
 node_io.put_item_in_inventory = function(pos, node, inv_name, putter, itemstack)
 	local inv = minetest.get_meta(pos):get_inventory()
 	if not inv or itemstack:is_empty() then return itemstack end
@@ -185,7 +205,7 @@ node_io.take_item_from_inventory = function(pos, node, inv_name, taker, want_ite
 	for i = 1, inv:get_size(inv_name) do
 		local stack = inv:get_stack(inv_name, i)
 		local stack_item = stack:get_name()
-		if stack_item ~= "" and (want_item == nil or stack_item == want_item) then
+		if stack_item ~= "" and (want_item == nil or (type(want_item) == "userdata" and node_io.compare_itemstack(stack, want_item)) or stack_item == want_item) then
 			if stack:get_count() > want_count then
 				-- stack is larger than wanted
 				local result_stack = stack:take_item(want_count)
@@ -231,6 +251,9 @@ node_io.init_main_inventory = function(node_name, allow_take)
 		end
 		def.node_io_get_item_name = function(pos, node, side, index)
 			return node_io.get_inventory_name(pos, "main", index)
+		end
+		def.node_io_get_item_stack = function(pos, node, side, index)
+			return node_io.get_inventory_stack(pos, "main", index)
 		end
 		def.node_io_take_item = function(pos, node, side, taker, want_item, want_count)
 			return node_io.take_item_from_inventory(pos, node, "main", taker, want_item, want_count)
