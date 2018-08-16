@@ -7,6 +7,8 @@ It provides many utility functions for inventory nodes to implement the API and 
 Inventory nodes that lack standard inventories can also use the API to work with transfer mods.
 The API currently supports item and liquid inventory nodes, but could be extended to support anything that can be transfered between nodes (signals, power, ...).
 
+This mod is a pure API and should never add any nodes or items.
+
 This mod implements node-io support for default chest, locked chest and furnace.
 But if the pipeworks mod is installed, the furnace loses support due to being redefined by pipeworks.
 
