@@ -60,6 +60,11 @@ node_io.can_take_liquid = function(pos, node, side)
 	if not ndef or not ndef.node_io_can_take_liquid then return false end
 	return ndef.node_io_can_take_liquid(pos, node, side)
 end
+node_io.accepts_millibuckets = function(pos, node, side)
+	local ndef = minetest.registered_nodes[node.name]
+	if not ndef or not ndef.node_io_accepts_millibuckets then return false end
+	return ndef.node_io_accepts_millibuckets(pos, node, side)
+end
 
 node_io.room_for_item = function(pos, node, side, itemstack, count) -- returns non-negative number
 	local ndef = minetest.registered_nodes[node.name]
