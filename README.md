@@ -21,4 +21,4 @@ Links
 
 [Download](https://github.com/auouymous/node_io/archive/master.zip)
 
-[Forum Post](https://forum.minetest.net/viewtopic.php?f=9&t=20624)
+[Forum Post](https://forum.minetest.net/viewtopic.php?t=20624)
