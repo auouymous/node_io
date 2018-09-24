@@ -169,7 +169,7 @@ node_io.room_for_item_in_inventory = function(inv, inv_name, itemstack, count)
 		if stack:is_empty() then return put_count end
 		if node_io.compare_itemstack(stack, itemstack) then
 			if stack:get_count() < max then
-				local room = room + max - stack:get_count()
+				room = room + max - stack:get_count()
 				if room >= put_count then return put_count end
 			end
 		end
