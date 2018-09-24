@@ -140,6 +140,18 @@ end
 
 -- functions for mods with inventories to implement API
 
+node_io.get_inventory = function(pos)
+	if pos.type then
+		-- {type="node", pos={x=<X>, y=<Y>, z=<Z>}}
+		-- {type="detached", name="<name>"}
+		-- {type="player", name="<name>"}
+		return minetest.get_inventory(pos)
+	else
+		-- {x=<X>, y=<Y>, z=<Z>}
+		return minetest.get_meta(pos):get_inventory()
+	end
+end
+
 node_io.compare_itemstack = function(itemstack1, itemstack2)
 	if itemstack1:get_name() ~= itemstack2:get_name() then return false end
 	if itemstack1:get_wear() ~= itemstack2:get_wear() then return false end
@@ -166,19 +178,19 @@ node_io.room_for_item_in_inventory = function(inv, inv_name, itemstack, count)
 end
 
 node_io.get_inventory_size = function(pos, inv_name)
-	local inv = minetest.get_meta(pos):get_inventory()
+	local inv = node_io.get_inventory(pos) -- see node_io.get_inventory() for pos details
 	if not inv then return 0 end
 	return inv:get_size(inv_name)
 end
 
 node_io.get_inventory_name = function(pos, inv_name, index)
-	local inv = minetest.get_meta(pos):get_inventory()
+	local inv = node_io.get_inventory(pos) -- see node_io.get_inventory() for pos details
 	if not inv or index < 1 or index > inv:get_size(inv_name) then return "" end
 	return inv:get_stack(inv_name, index):get_name()
 end
 
 node_io.get_inventory_stack = function(pos, inv_name, index)
-	local inv = minetest.get_meta(pos):get_inventory()
+	local inv = node_io.get_inventory(pos) -- see node_io.get_inventory() for pos details
 	if not inv or index < 1 or index > inv:get_size(inv_name) then return nil end
 	local stack = inv:get_stack(inv_name, index)
 	if stack:is_empty() then return nil end
@@ -187,7 +199,7 @@ node_io.get_inventory_stack = function(pos, inv_name, index)
 end
 
 node_io.put_item_in_inventory = function(pos, node, inv_name, putter, itemstack)
-	local inv = minetest.get_meta(pos):get_inventory()
+	local inv = node_io.get_inventory(pos) -- see node_io.get_inventory() for pos details
 	if not inv or itemstack:is_empty() then return itemstack end
 
 	local leftovers = inv:add_item(inv_name, itemstack)
@@ -204,7 +216,7 @@ node_io.put_item_in_inventory = function(pos, node, inv_name, putter, itemstack)
 end
 
 node_io.take_item_from_inventory = function(pos, node, inv_name, taker, want_item, want_count)
-	local inv = minetest.get_meta(pos):get_inventory()
+	local inv = node_io.get_inventory(pos) -- see node_io.get_inventory() for pos details
 	if not inv or inv:is_empty(inv_name) then return nil end
 
 	for i = 1, inv:get_size(inv_name) do
@@ -241,7 +253,7 @@ node_io.init_main_inventory = function(node_name, allow_take)
 
 	def.node_io_can_put_item = function(pos, node, side) return true end
 	def.node_io_room_for_item = function(pos, node, side, itemstack, count)
-		local inv = minetest.get_meta(pos):get_inventory()
+		local inv = node_io.get_inventory(pos) -- see node_io.get_inventory() for pos details
 		if not inv then return 0 end
 		return node_io.room_for_item_in_inventory(inv, "main", itemstack, count)
 	end
