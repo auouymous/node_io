@@ -35,6 +35,20 @@ end
 
 
 
+-- notify all six neighbors of node changes (placed, dug, can_put, can_take)
+
+node_io.update_neighbors = function(pos)
+	local p, n, d
+	p={x=pos.x+1, y=pos.y, z=pos.z} n=minetest.get_node(p) d=minetest.registered_nodes[n.name] if d and d.node_io_on_neighbor_update then d.node_io_on_neighbor_update(p,n,"W") end
+	p={x=pos.x-1, y=pos.y, z=pos.z} n=minetest.get_node(p) d=minetest.registered_nodes[n.name] if d and d.node_io_on_neighbor_update then d.node_io_on_neighbor_update(p,n,"E") end
+	p={x=pos.x, y=pos.y+1, z=pos.z} n=minetest.get_node(p) d=minetest.registered_nodes[n.name] if d and d.node_io_on_neighbor_update then d.node_io_on_neighbor_update(p,n,"D") end
+	p={x=pos.x, y=pos.y-1, z=pos.z} n=minetest.get_node(p) d=minetest.registered_nodes[n.name] if d and d.node_io_on_neighbor_update then d.node_io_on_neighbor_update(p,n,"U") end
+	p={x=pos.x, y=pos.y, z=pos.z+1} n=minetest.get_node(p) d=minetest.registered_nodes[n.name] if d and d.node_io_on_neighbor_update then d.node_io_on_neighbor_update(p,n,"S") end
+	p={x=pos.x, y=pos.y, z=pos.z-1} n=minetest.get_node(p) d=minetest.registered_nodes[n.name] if d and d.node_io_on_neighbor_update then d.node_io_on_neighbor_update(p,n,"N") end
+end
+
+
+
 -- query API
 	-- can_* functions should always be called first and return false if ndef isn't found (unknown node)
 	-- the other functions can safely skip the ndef check for performance

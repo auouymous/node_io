@@ -20,6 +20,21 @@ API has utility functions to get a node's side
 
 
 
+all nodes should call node_io.update_neighbors(pos) from their after_place_node() and after_dig_node() callbacks
+	ndef.after_place_node = node_io.update_neighbors
+	ndef.after_dig_node = node_io.update_neighbors
+	-OR-
+	ndef.after_place_node = function(pos, placer, itemstack, pointed_thing)
+		...
+		if minetest.get_modpath("node_io") then node_io.update_neighbors(pos) end
+	end
+	ndef.after_dig_node = function(pos, oldnode, oldmetadata, digger)
+		...
+		if minetest.get_modpath("node_io") then node_io.update_neighbors(pos) end
+	end
+
+
+
 node definition implements all or some of these functions:
 
 	node_io_can_put_item(pos, node, side) -> bool
@@ -84,6 +99,12 @@ node definition implements all or some of these functions:
 			-- want_count parameter for take_*() can be adjusted to only take what will fit in local inventory
 		-- return value should be an itemstack with count=1 or nil
 	node_io_get_liquid_stack(pos, node, side, index) -> liquid itemstack
+
+
+	node_io_on_neighbor_update(pos, node, side)
+		-- called when neighbor node on side updates (was placed, dug or changed put/take settings)
+		-- transfer nodes can listen and update their visual appearance to indicate a connection
+		-- pos and node are for current node, not the node that was updated
 
 
 	-- TODO: support power and signals
