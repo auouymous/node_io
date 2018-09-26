@@ -237,27 +237,22 @@ node_io.take_item_from_inventory = function(pos, node, inv_name, taker, want_ite
 		local stack = inv:get_stack(inv_name, i)
 		local stack_item = stack:get_name()
 		if stack_item ~= "" and (want_item == nil or (type(want_item) == "userdata" and node_io.compare_itemstack(stack, want_item)) or stack_item == want_item) then
+			local result_stack
 			if stack:get_count() > want_count then
 				-- stack is larger than wanted
-				local result_stack = stack:take_item(want_count)
+				result_stack = stack:take_item(want_count)
 				inv:set_stack(inv_name, i, stack)
-
-				local ndef = minetest.registered_nodes[node.name]
-				if ndef.on_metadata_inventory_take and putter then
-					ndef.on_metadata_inventory_take(pos, inv_name, i, stack, putter)
-				end
-
-				return result_stack
 			else
 				inv:remove_item(inv_name, stack)
-
-				local ndef = minetest.registered_nodes[node.name]
-				if ndef.on_metadata_inventory_take and taker then
-					ndef.on_metadata_inventory_take(pos, inv_name, i, stack, putter)
-				end
-
-				return stack
+				result_stack = stack
 			end
+
+			local ndef = minetest.registered_nodes[node.name]
+			if ndef.on_metadata_inventory_take and taker then
+				ndef.on_metadata_inventory_take(pos, inv_name, i, stack, taker)
+			end
+
+			return result_stack
 		end
 	end
 end
