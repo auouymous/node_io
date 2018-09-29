@@ -14,7 +14,7 @@ index 53a9e75..d2b2b18 100644
  lucky_block?
 +node_io
 diff --git a/init.lua b/init.lua
-index 062c739..6312402 100644
+index 062c739..d624092 100644
 --- a/init.lua
 +++ b/init.lua
 @@ -24,6 +24,7 @@ function check_creative(name)
@@ -169,7 +169,7 @@ index 062c739..6312402 100644
 +			for i = 1, inv:get_size("main") do
 +				local stack = inv:get_stack("main", i)
 +				local item = stack:get_name()
-+				if item ~= "" and node_io.room_for_item(put_pos, put_node, put_side, stack, 1) > 0 then
++				if item ~= "" and node_io.can_put_item(put_pos, put_node, put_side, stack, 1) then
 +					local leftovers = node_io.put_item(put_pos, put_node, put_side, nil, stack:take_item(1))
 +					if leftovers:is_empty() then
 +						inv:set_stack("main", i, stack)

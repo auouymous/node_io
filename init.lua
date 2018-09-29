@@ -53,15 +53,15 @@ end
 	-- can_* functions should always be called first and return false if ndef isn't found (unknown node)
 	-- the other functions can safely skip the ndef check for performance
 
-node_io.can_put_item = function(pos, node, side)
+node_io.can_put_item = function(pos, node, side, itemstack, count) -- returns non-negative number
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef or not ndef.node_io_can_put_item then return false end
-	return ndef.node_io_can_put_item(pos, node, side)
+	if not ndef or not ndef.node_io_can_put_item then return 0 end
+	return ndef.node_io_can_put_item(pos, node, side, itemstack, count)
 end
-node_io.can_put_liquid = function(pos, node, side)
+node_io.can_put_liquid = function(pos, node, side, liquid, millibuckets) -- returns non-negative number
 	local ndef = minetest.registered_nodes[node.name]
-	if not ndef or not ndef.node_io_can_put_liquid then return false end
-	return ndef.node_io_can_put_liquid(pos, node, side)
+	if not ndef or not ndef.node_io_can_put_liquid then return 0 end
+	return ndef.node_io_can_put_liquid(pos, node, side, liquid, millibuckets)
 end
 
 node_io.can_take_item = function(pos, node, side)
@@ -74,21 +74,11 @@ node_io.can_take_liquid = function(pos, node, side)
 	if not ndef or not ndef.node_io_can_take_liquid then return false end
 	return ndef.node_io_can_take_liquid(pos, node, side)
 end
+
 node_io.accepts_millibuckets = function(pos, node, side)
 	local ndef = minetest.registered_nodes[node.name]
 	if not ndef or not ndef.node_io_accepts_millibuckets then return false end
 	return ndef.node_io_accepts_millibuckets(pos, node, side)
-end
-
-node_io.room_for_item = function(pos, node, side, itemstack, count) -- returns non-negative number
-	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_room_for_item then return 0 end
-	return ndef.node_io_room_for_item(pos, node, side, itemstack, count)
-end
-node_io.room_for_liquid = function(pos, node, side, liquid, millibuckets) -- returns non-negative number
-	local ndef = minetest.registered_nodes[node.name]
-	if not ndef.node_io_room_for_liquid then return 0 end
-	return ndef.node_io_room_for_liquid(pos, node, side, liquid, millibuckets)
 end
 
 node_io.get_item_size = function(pos, node, side) -- returns non-negative number
@@ -260,8 +250,9 @@ end
 node_io.init_main_inventory = function(node_name, allow_take)
 	local def = {}
 
-	def.node_io_can_put_item = function(pos, node, side) return true end
-	def.node_io_room_for_item = function(pos, node, side, itemstack, count)
+	def.node_io_can_put_item = function(pos, node, side, itemstack, count)
+		if not itemstack then return 1 end -- can put
+
 		local inv = node_io.get_inventory(pos) -- see node_io.get_inventory() for pos details
 		if not inv then return 0 end
 		return node_io.room_for_item_in_inventory(inv, "main", itemstack, count)

@@ -37,14 +37,27 @@ all nodes should call node_io.update_neighbors(pos) from their after_place_node(
 
 node definition implements all or some of these functions:
 
-	node_io_can_put_item(pos, node, side) -> bool
-	node_io_can_put_liquid(pos, node, side) -> bool
+	node_io_can_put_item(pos, node, side) -> 0 or 1
+	node_io_can_put_item(pos, node, side, itemstack, count) -> int
+		-- if itemstack is nil, return 1 if putting is allowed, else return 0 (ignore count)
+		-- ignore count in itemstack, only use the count parameter
+		-- returns count if inventory can hold entire stack, else returns amount the inventory can hold
+		-- use count=1 to check if not full, then call node_io_put_item() with actual amount to transfer
+		-- the non-zero return count is needed by transfer nodes that take from one inventory node and put in another inventory node
+	node_io_can_put_liquid(pos, node, side) -> 0 or 1
+	node_io_can_put_liquid(pos, node, side, liquid, millibuckets) -> int
+		-- if liquid is nil, return 1 if putting is allowed, else return 0 (ignore millibuckets)
+		-- returns millibuckets if inventory can hold entire amount, else returns amount the inventory can hold
+		-- use millibuckets=1 to check if not full, then call node_io_put_liquid() with actual amount to transfer
+		-- use millibuckets=1000 with node_io_can_put_liquid() and node_io_put_liquid() to only insert full buckets
+
 	node_io_can_take_item(pos, node, side) -> bool
 	node_io_can_take_liquid(pos, node, side) -> bool
+
 	node_io_accepts_millibuckets(pos, node, side) -> bool
 		-- if false, transfer node should only put and take in 1000 increments
 		-- inventory nodes that don't accept milibuckets should:
-			-- return zero in node_io_room_for_liquid() if non-1000 increment
+			-- return zero in node_io_can_put_liquid() if non-1000 increment
 			-- return millibuckets parameter in node_io_put_liquid() if non-1000 increment
 			-- only return upto a 1000 increment in node_io_take_liquid()
 		-- transfer nodes that can put non-1000 increments should always check this or the inventory node might pretend to be full
@@ -57,16 +70,6 @@ node definition implements all or some of these functions:
 		-- returns millibuckets with leftovers or zero if all was stored
 		-- liquid should be the name of a source liquid (in bucket.liquids of bucket mod)
 		-- 1 bucket or source block is 1000 millibuckets
-
-	node_io_room_for_item(pos, node, side, itemstack, count) -> int
-		-- ignore count in itemstack, only use the count parameter
-		-- returns count if inventory can hold entire stack, else returns amount the inventory can hold
-		-- use count=1 to check if not full, then call put_item() with actual amount to transfer
-		-- the non-zero return count is needed by transfer nodes that take from one inventory node and put in another inventory node
-	node_io_room_for_liquid(pos, node, side, liquid, millibuckets) -> int
-		-- returns millibuckets if inventory can hold entire amount, else returns amount the inventory can hold
-		-- use millibuckets=1 to check if not full, then call put_liquid() with actual amount to transfer
-		-- use millibuckets=1000 with room_for_liquid() and put_liquid() to only insert full buckets
 
 
 	node_io_take_item(pos, node, side, taker, want_item, want_count)
@@ -113,7 +116,7 @@ node definition implements all or some of these functions:
 
 API has utility functions for transfer nodes to easily call every node function above
 	-- node_io.can_put_item() calls ndef.node_io_can_put_item()
-	-- the can_put_* functions should always be called before using the room_for_* or put_* functions on an inventory node
+	-- the can_put_* functions should always be called before using the put_* functions on an inventory node
 	-- the can_take_* functions should always be called before using the get_*_size, get_*_name, get_*_stack or take_* functions on an inventory node
 
 API has utility functions for standard inventory nodes to easily implement the API
@@ -127,7 +130,7 @@ API has utility functions for standard inventory nodes to easily implement the A
 		-- returns true if both itemstacks are identical, excluding count
 
 	node_io.room_for_item_in_inventory(inv, inv_name, itemstack, count) -> int
-		-- call from node_io_room_for_item()
+		-- call from node_io_can_put_item()
 	node_io.get_inventory_size(pos, inv_name)
 		-- call from node_io_get_item_size()
 	node_io.get_inventory_name(pos, inv_name, index)

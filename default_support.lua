@@ -14,8 +14,9 @@ if minetest.get_modpath("default") then
 	node_io.init_default_furnace = function(node_name)
 		local def = {}
 
-		def.node_io_can_put_item = function(pos, node, side) return true end
-		def.node_io_room_for_item = function(pos, node, side, itemstack, count)
+		def.node_io_can_put_item = function(pos, node, side, itemstack, count)
+			if not itemstack then return 1 end -- can put
+
 			local inv = minetest.get_meta(pos):get_inventory()
 			if not inv then return 0 end
 			local inv_name
