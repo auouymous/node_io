@@ -13,6 +13,7 @@ This mod implements node-io support for default chest, locked chest and furnace.
 But if the pipeworks mod is installed, the furnace loses support due to being redefined by pipeworks.
 Adding `pipeworks?` to ~/.minetest/mods/node_io/depends.txt will fix the issue until pipeworks adds node_io support.
 
+See the `API` file if implementing Node-IO for inventory or transfer nodes.
 The [test_io](https://github.com/auouymous/test_io) mod contains item and liquid transfer nodes to test the node_io mod.
 
 
