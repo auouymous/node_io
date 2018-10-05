@@ -1,58 +1,106 @@
-side is a string:
-	"U" = +Y = up/top
-	"D" = -Y = down/bottom
-	"N" = +Z = north
-	"S" = -Z = south
-	"E" = +X = east
-	"W" = -X = west
+DEFINITIONS
 
+	ndef is the node definition returned by minetest.registered_nodes[node.name]
 
+	pos is an {x=, y=, z=} object
 
-API has utility functions to get a node's side
+	node is the object returned by minetest.get_node(pos)
 
-	node_io.get_target_side(pos, target_pos) -> side
-		-- pos is position of transfer node and target_pos is position of inventory node
-		-- returns the side on inventory node
+	side is a string:
+		"U" = +Y = up/top
+		"D" = -Y = down/bottom
+		"N" = +Z = north
+		"S" = -Z = south
+		"E" = +X = east
+		"W" = -X = west
 
-	node_io.get_pointed_side(pointer, pointed_thing) -> side
-		-- pointer is player and pointed_thing is the node player is pointing at
-		-- returns the side of node the player is pointing at
+	millibuckets
+		-- 1 bucket contains 1 liquid source node
+		-- a millibucket is 1000th of a bucket (there are 1000 millibuckets in a bucket)
+		-- "mB" is the unit for millibuckets
 
+	putter and taker is player
+		-- a transfer node that has a real or fake player can pass it, otherwise pass nil
+		-- these should only be used by the inventory node for logging and on_metadata_* callbacks
+		-- a wifi or ender chest should store the player who placed the chest in metadata
+			-- and use that player when accessed via node-io callbacks
 
+	inv is an InvRef object
+	inv_name is a string
 
-all nodes should call node_io.update_neighbors(pos) from their after_place_node() and after_dig_node() callbacks
-	ndef.after_place_node = node_io.update_neighbors
-	ndef.after_dig_node = node_io.update_neighbors
+----------------------------------------------------------------------------------------------------
+
+Setting a boolean in your mod table avoids slow modpath checks in runtime code.
+Replace <my_mod> with the name of your inventory or transfer mod.
+
+	<my_mod> = {}
+	<my_mod>.node_io = (minetest.get_modpath("node_io") ~= nil)
+
+All inventory nodes should call node_io.update_neighbors(pos) from their after_place_node() and
+after_dig_node() callbacks. This allows transfer nodes, such as tubes and pipes, to update their
+visual appearance when an inventory node is placed or removed. An inventory node that changes its
+can_put or can_take status should call node_io.update_neighbors(pos). This would happen if the node
+has a UI to configure which sides can accept input or output.
+
+	if <my_mod>.node_io then
+		ndef.after_place_node = node_io.update_neighbors
+		ndef.after_dig_node = node_io.update_neighbors
+	end
+
 	-OR-
+
 	ndef.after_place_node = function(pos, placer, itemstack, pointed_thing)
 		...
-		if minetest.get_modpath("node_io") then node_io.update_neighbors(pos) end
+		if <my_mod>.node_io then node_io.update_neighbors(pos) end
 	end
 	ndef.after_dig_node = function(pos, oldnode, oldmetadata, digger)
 		...
-		if minetest.get_modpath("node_io") then node_io.update_neighbors(pos) end
+		if <my_mod>.node_io then node_io.update_neighbors(pos) end
 	end
 
+A transfer node definition implements this function to receive updates from inventory nodes:
 
+	node_io_on_neighbor_update(pos, node, side)
+		-- called when neighbor node on side updates (was placed, dug or changed put/take settings)
+		-- transfer nodes can listen and update their visual appearance to indicate a connection
+			-- a tube that only puts will call node_io_can_put_item() for inventory nodes around it
+			-- a tube that only takes will call node_io_can_take_item() for inventory nodes around it
+			-- a tube that puts or takes will call (node_io_can_put_item() or node_io_can_take_item())
+				for inventory nodes around it
+		-- pos and node are for current node, not the node that was updated
 
-node definition implements all or some of these functions:
+----------------------------------------------------------------------------------------------------
+
+An inventory node definition implements all or some of these functions.
 
 	node_io_can_put_item(pos, node, side) -> 0 or 1
+		-- specifies if putting is possible, it is not an indication if inventory is empty or full
 	node_io_can_put_item(pos, node, side, itemstack, count) -> int
-		-- if itemstack is nil, return 1 if putting is allowed, else return 0 (ignore count)
+		-- if itemstack is nil, return 1 if putting is allowed, otherwise return 0
 		-- ignore count in itemstack, only use the count parameter
-		-- returns count if inventory can hold entire stack, else returns amount the inventory can hold
-		-- use count=1 to check if not full, then call node_io_put_item() with actual amount to transfer
-		-- the non-zero return count is needed by transfer nodes that take from one inventory node and put in another inventory node
+		-- returns count if inventory can hold entire stack
+			-- or returns amount the inventory can hold
+		-- use count=1 to check if not full
+			-- then call node_io_put_item() with actual amount to transfer
+		-- put_item() must also be implemented
 	node_io_can_put_liquid(pos, node, side) -> 0 or 1
+		-- specifies if putting is possible, it is not an indication if inventory is empty or full
 	node_io_can_put_liquid(pos, node, side, liquid, millibuckets) -> int
-		-- if liquid is nil, return 1 if putting is allowed, else return 0 (ignore millibuckets)
-		-- returns millibuckets if inventory can hold entire amount, else returns amount the inventory can hold
-		-- use millibuckets=1 to check if not full, then call node_io_put_liquid() with actual amount to transfer
-		-- use millibuckets=1000 with node_io_can_put_liquid() and node_io_put_liquid() to only insert full buckets
+		-- if liquid is nil, return 1 if putting is allowed, otherwise return 0
+		-- returns millibuckets if inventory can hold entire amount
+			-- or returns amount the inventory can hold
+		-- use millibuckets=1 to check if not full
+			-- then call node_io_put_liquid() with actual amount to transfer
+		-- use millibuckets=1000 with node_io_can_put_liquid() and node_io_put_liquid()
+			to only insert full buckets
+		-- put_liquid() must also be implemented
 
 	node_io_can_take_item(pos, node, side) -> bool
+		-- specifies if taking is possible, it is not an indication if inventory is empty or full
+		-- take_item() must also be implemented
 	node_io_can_take_liquid(pos, node, side) -> bool
+		-- specifies if taking is possible, it is not an indication if inventory is empty or full
+		-- take_liquid() must also be implemented
 
 	node_io_accepts_millibuckets(pos, node, side) -> bool
 		-- if false, transfer node should only put and take in 1000 increments
@@ -60,92 +108,129 @@ node definition implements all or some of these functions:
 			-- return zero in node_io_can_put_liquid() if non-1000 increment
 			-- return millibuckets parameter in node_io_put_liquid() if non-1000 increment
 			-- only return upto a 1000 increment in node_io_take_liquid()
-		-- transfer nodes that can put non-1000 increments should always check this or the inventory node might pretend to be full
-
+		-- transfer nodes that can put non-1000 increments should always query this function
+			-- or the inventory node might pretend to be full
 
 	node_io_put_item(pos, node, side, putter, itemstack)
-		-- returns itemstack with leftovers or cleared
+		-- returns itemstack with leftovers or cleared if all was stored
 		-- putter is a fake player
 	node_io_put_liquid(pos, node, side, putter, liquid, millibuckets)
 		-- returns millibuckets with leftovers or zero if all was stored
 		-- liquid should be the name of a source liquid (in bucket.liquids of bucket mod)
-		-- 1 bucket or source block is 1000 millibuckets
-
 
 	node_io_take_item(pos, node, side, taker, want_item, want_count)
-		-- returns an itemstack with <= want_count or nil if inventory is empty or doesn't have want_item
+		-- returns an itemstack with <= want_count
+			-- or nil if inventory is empty or doesn't have want_item
 		-- taker is a fake player
-		-- want_item should be nil for any item, contain a string with item name to filter by name or contain an itemstack to filter by name, wear and metadata
+		-- want_item should be nil to take any item
+			-- or contain a string with item name to filter by name
+			-- or contain an itemstack to filter by name, wear and metadata
 		-- want_count should be greater than zero
 		-- returned itemstack shouldn't exceed max stack size, even if want_count does
 	node_io_take_liquid(pos, node, side, taker, want_liquid, want_millibuckets)
-		-- returns {name:string, millibuckets:int} with <= want_millibuckets or nil if inventory is empty or doesn't have want_liquid
+		-- returns {name:string, millibuckets:int} with <= want_millibuckets
+			-- or nil if inventory is empty or doesn't have want_liquid
 		-- want_liquid should be the name of a source liquid (in bucket.liquids of bucket mod)
 
-	-- items and liquid should not be put back after taken
-	-- use the following API to check if taken item can be used/stored before taking it
+Items and liquid should not be put back after taken, the inventory might not even support putting
+items in it. The following callbacks must be implemented if taking is allowed. Transfer nodes can
+use these to find items in the inventory which it can take, before it takes them. The want_count
+parameter for take_*() can be adjusted to only take what will fit in local inventory. Filters can
+use these to only take items allowed through the filter.
 
-	node_io_get_item_size(pos, node, side) -> number of item inventory slots
+	node_io_get_item_size(pos, node, side) -> int
+		-- get number of item inventory slots
+		-- slots don't need to map to real InvRef slots
 		-- can be used to iterate over an inventory
-		-- for i = 1, size do ... end
-	node_io_get_liquid_size(pos, node, side) -> number of liquid inventory slots
+			-- for i = 1, size do ... end
+	node_io_get_liquid_size(pos, node, side) -> int
+		-- get number of liquid inventory slots
 		-- this is always 1 unless inventory can hold multiple liquid types
 
 	node_io_get_item_name(pos, node, side, index) -> item name
-		-- can be used to get the name of the stack in inventory slot, and determine if it will fit in local inventory before taking it
-			-- want_count parameter for take_*() can be adjusted to only take what will fit in local inventory
+		-- get name of the stack in inventory slot
+		-- this is useful for liquid inventories to avoid possible ItemStack creation
+			-- but transfer nodes shouldn't trust it for items with wear or metadata
+		-- index is 1 to size
 		-- return value should be a string with name or empty string
 	node_io_get_liquid_name(pos, node, side, index) -> liquid name
 
-	node_io_get_item_stack(pos, node, side, index) -> item itemstack
-		-- can be used to get a copy of the itemstack in inventory slot, and determine if it will fit in local inventory before taking it
-			-- want_count parameter for take_*() can be adjusted to only take what will fit in local inventory
+	node_io_get_item_stack(pos, node, side, index) -> itemstack
+		-- get a copy of the itemstack in inventory slot
+		-- index is 1 to size
 		-- return value should be an itemstack with count=1 or nil
-	node_io_get_liquid_stack(pos, node, side, index) -> liquid itemstack
+	node_io_get_liquid_stack(pos, node, side, index) -> itemstack
 
+----------------------------------------------------------------------------------------------------
 
-	node_io_on_neighbor_update(pos, node, side)
-		-- called when neighbor node on side updates (was placed, dug or changed put/take settings)
-		-- transfer nodes can listen and update their visual appearance to indicate a connection
-		-- pos and node are for current node, not the node that was updated
+Utility functions to get a node's side.
 
+	node_io.get_target_side(pos, target_pos) -> side
+		-- pos is position of transfer node and target_pos is position of inventory node
+		-- returns the side on inventory node
 
-	-- TODO: support power and signals
+	node_io.get_pointed_side(pointer, pointed_thing) -> side
+		-- pointer is player
+		-- pointed_thing is the node player is pointing at - https://dev.minetest.net/pointed_thing
+		-- returns the side of node the player is pointing at
 
+Utility functions for standard inventory nodes to easily implement the API.
 
-
-API has utility functions for transfer nodes to easily call every node function above
-	-- node_io.can_put_item() calls ndef.node_io_can_put_item()
-	-- the can_put_* functions should always be called before using the put_* functions on an inventory node
-	-- the can_take_* functions should always be called before using the get_*_size, get_*_name, get_*_stack or take_* functions on an inventory node
-
-API has utility functions for standard inventory nodes to easily implement the API
 	-- pos parameter can be:
 		-- {x=<X>, y=<Y>, z=<Z>}
 		-- {type="node", pos={x=<X>, y=<Y>, z=<Z>}}
 		-- {type="detached", name="<name>"}
 		-- {type="player", name="<name>"}
 
+	node_io.get_inventory(pos) -> InvRef
+		-- returns inventory from any of the above position types
+
 	node_io.compare_itemstack(itemstack1, itemstack2) -> bool
 		-- returns true if both itemstacks are identical, excluding count
 
 	node_io.room_for_item_in_inventory(inv, inv_name, itemstack, count) -> int
 		-- call from node_io_can_put_item()
+
 	node_io.get_inventory_size(pos, inv_name)
 		-- call from node_io_get_item_size()
 	node_io.get_inventory_name(pos, inv_name, index)
 		-- call from node_io_get_item_name()
 	node_io.get_inventory_stack(pos, inv_name, index)
 		-- call from node_io_get_item_stack()
+
 	node_io.put_item_in_inventory(pos, node, inv_name, putter, itemstack)
 		-- call from node_io_put_item()
 	node_io.take_item_from_inventory(pos, node, inv_name, taker, want_item, want_count)
 		-- call from node_io_take_item()
 
+This utility function implements the entire API for standard inventory nodes that have a single
+"main" inventory.
+
 	node_io.init_main_inventory(node_name, allow_take)
-		-- implement the API for standard inventory nodes that have a single "main" inventory
 
+Utility functions for transfer nodes to easily call the functions implemented by inventory nodes.
+Every inventory node function has a utility function that queries the node definition,
+verifies the node has implemented the given function and then calls it.
+These are less efficient than directly calling the inventory node functions,
+and any serious transfer mod shouldn't use them.
 
+	-- Example: node_io.can_put_item(...) calls ndef.node_io_can_put_item(...)
 
-See default_support.lua for API implementation in default:chest and default:furnace inventory nodes.
-See patches/hopper-tenplus1.patch for example API use by the hopper:hopper transfer node.
+	-- the node_io.can_put_* functions should always be called before using the node_io.put_*
+		functions on an inventory node
+
+	-- the node_io.can_take_* functions should always be called before using the node_io.get_*_size,
+		node_io.get_*_name, node_io.get_*_stack or node_io.take_* functions on an inventory node
+
+----------------------------------------------------------------------------------------------------
+
+Inventory node implementations:
+
+	-- the default_support.lua file
+	-- the init_main_inventory function in the init.lua file
+	-- the barrels.lua file in the storage_barrels mod - https://github.com/auouymous/storage_barrels
+
+Transfer node implementations:
+
+	-- the patches/hopper-tenplus1.patch file
+	-- the init.lua file in the test_io mod - https://github.com/auouymous/test_io
