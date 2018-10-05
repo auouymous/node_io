@@ -50,8 +50,8 @@ end
 
 
 -- query API
-	-- can_* functions should always be called first and return false if ndef isn't found (unknown node)
-	-- the other functions can safely skip the ndef check for performance
+	-- can_* functions should always be called first and return 0 or false if ndef isn't found (unknown node)
+	-- the other functions skip the ndef check for performance
 
 node_io.can_put_item = function(pos, node, side, itemstack, count) -- returns non-negative number
 	local ndef = minetest.registered_nodes[node.name]
@@ -115,6 +115,7 @@ node_io.get_liquid_stack = function(pos, node, side, index) -- returns itemstack
 end
 
 
+
 -- access API
 
 node_io.put_item = function(pos, node, side, putter, itemstack) -- returns itemstack with leftovers or a cleared itemstack
@@ -138,7 +139,6 @@ node_io.take_liquid = function(pos, node, side, taker, want_liquid, want_count) 
 	if not ndef.node_io_take_liquid then return nil end
 	return ndef.node_io_take_liquid(pos, node, side, taker, want_liquid, want_count)
 end
-
 
 
 
